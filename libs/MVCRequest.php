@@ -6,11 +6,11 @@ class MVCRequest
     private $m_AppMethod = NULL;
     private $m_AppArgs = NULL;
     
-    public function __construct($httpURI = NULL, $defaultController, $defaultMethod)
+    public function __construct($httpURI = NULL, CFGConfig $cfg)
     {
         if($httpURI == NULL)
         {
-            $this->defaultConstructor($defaultController, $defaultMethod);
+            $this->defaultConstructor($cfg);
             return;
         }
         
@@ -20,15 +20,15 @@ class MVCRequest
         $this->m_AppMethod = array_shift($uriInfo);
         $this->m_AppArgs = $uriInfo;
         
-        $this->m_AppController = ($this->m_AppController != NULL)? strtolower($this->m_AppController) : $defaultController ;
-        $this->m_AppMethod = ($this->m_AppMethod != NULL)? strtolower($this->m_AppMethod) : $defaultMethod;
-        $this->m_AppArgs = ($this->m_AppArgs != NULL)? array_map('strtolower', $this->m_AppArgs) : array();
+        $this->m_AppController = ($this->m_AppController != NULL)? strtolower($this->m_AppController) : $cfg->getController()->getController();
+        $this->m_AppMethod = ($this->m_AppMethod != NULL)? strtolower($this->m_AppMethod) : $cfg->getController()->getMethod();
+        $this->m_AppArgs = ($this->m_AppArgs != NULL)? $this->m_AppArgs : array();
     }
     
-    private function defaultConstructor($defaultController, $defaultMethod)
+    private function defaultConstructor(CFGConfig $cfg)
     {
-        $this->m_AppController = $defaultController;
-        $this->m_AppMethod = $defaultMethod;
+        $this->m_AppController = $cfg->getController()->getController();
+        $this->m_AppMethod = $cfg->getController()->getMethod();
         $this->m_AppArgs = array();
     }
     
