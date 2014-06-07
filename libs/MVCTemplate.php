@@ -4,12 +4,14 @@ class MVCTemplate
 {
     private $m_Path = NULL;
     private $m_ShortExpr = NULL;
+    private $m_BlockExpr = NULL;
     private $m_IfElseExpr = NULL;
     
     public function __construct($tPath)
     {
         $this->m_Path = $tPath;
         $this->m_ShortExpr = array();
+        $this->m_BlockExpr = array();
         $this->m_IfElseExpr = array();
     }
     
@@ -18,9 +20,9 @@ class MVCTemplate
         if(!is_readable($this->m_Path . DIRECTORY_SEPARATOR . $tFile)) exit($tFile . ' <b>Can\'t be read!</b>');
         $fContent = file_get_contents($this->m_Path . DIRECTORY_SEPARATOR . $tFile);
         
-        $fContent = $this->replaceIfElse($fContent);
+        $fContent = $this->replaceIfElses($fContent);
         $fContent = $this->replacesIncludes($fContent);
-        $fContent = $this->replaceExpression($fContent);
+        $fContent = $this->replaceExpressions($fContent);
         
         
         return($fContent);
@@ -31,12 +33,17 @@ class MVCTemplate
         $this->m_ShortExpr = array_merge($this->m_ShortExpr, array($key => $value));
     }
     
+    public function addBlockExpression($key, $value)
+    {
+        $this->m_BlockExpr = array_merge($this->m_BlockExpr, array($key => $value));
+    }
+    
     public function addIfElseExpression($key, $value)
     {
         $this->m_IfElseExpr = array_merge($this->m_IfElseExpr, array($key => $value));
     }
     
-    private function replaceIfElse($fContent)
+    private function replaceIfElses($fContent)
     {
         while(preg_match('#<!-- IF (.*?) -->(.*?)<!-- ENDIF -->#is', $fContent, $toReplace))
         {
@@ -72,11 +79,21 @@ class MVCTemplate
         return($fContent);
     }
     
-    private function replaceExpression($fContent)
+    private function replaceExpressions($fContent)
     {
         foreach($this->m_ShortExpr as $key => $val)
         {
             $fContent = preg_replace('#{' . $key . '}#', $val, $fContent);
+        }
+        
+        foreach($this->m_BlockExpr as $key => $val) //foreach($val as $k => $v)
+        {
+            $lContent = '';
+            if(preg_match('#<!-- BEGIN ' . $key . ' -->(.*?)<!-- END ' . $key . ' -->#is', $fContent, $toReplace))
+            {
+               foreach($val as $kV) $lContent .= str_replace(array_map(function($v){return('{' . $v . '}');}, array_keys($kV)), array_values($kV), $toReplace[1]);
+               $fContent = preg_replace('#' . $toReplace[0] . '#is', $lContent, $fContent);
+            }
         }
         
         return($fContent);  
